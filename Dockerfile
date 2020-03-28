@@ -28,4 +28,4 @@ FROM alpine:latest
 
 COPY --from=cargo-build /usr/src/pxyrs/target/x86_64-unknown-linux-musl/release/pxyrs /usr/local/bin/pxyrs
 
-CMD ["pxyrs"]
+ENTRYPOINT ["pxyrs"]
