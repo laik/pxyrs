@@ -14,23 +14,28 @@ pub async fn main() -> Result<(), Box<dyn Error>> {
     let listen_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8081".to_string());
-    let server_addr = env::args()
+
+    let server_addrs = env::args()
         .nth(2)
         .unwrap_or_else(|| "127.0.0.1:8082".to_string());
 
     println!("Listening on: {}", listen_addr);
-    println!("Proxying to: {}", server_addr);
+    println!("Proxying to: {}", server_addrs);
+
+    let address = server_addrs.split(",").map(|addr| addr).collect::<Vec<_>>();
 
     let mut listener = TcpListener::bind(listen_addr).await?;
 
-    while let Ok((inbound, _)) = listener.accept().await {
-        let transfer = transfer(inbound, server_addr.clone()).map(|r| {
-            if let Err(e) = r {
-                info!("Failed to transfer; error={}", e);
-            }
-        });
+    for addr in address {
+        while let Ok((inbound, _)) = listener.accept().await {
+            let transfer = transfer(inbound, addr.to_string().clone()).map(|r| {
+                if let Err(e) = r {
+                    info!("Failed to transfer; error={}", e);
+                }
+            });
 
-        tokio::spawn(transfer);
+            tokio::spawn(transfer);
+        }
     }
 
     Ok(())
